@@ -1,0 +1,39 @@
+To allow our app access on 'https', we need SSL certificate. And we can manually create one locally.
+
+D:\nginx-certs> openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx-selfsigned.key -out nginx-selfsigned.crt
+
+PS D:\nginx-certs> ls
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        25-04-2026     21:41           1310 nginx-selfsigned.crt # private key
+-a----        25-04-2026     21:40           1732 nginx-selfsigned.key # public key
+
+Modify nginx.conf:
+
+server {
+    listen 443 ssl;
+    server_name localhost;
+    
+    ssl_certificate D:/nginx-certs/nginx-selfsigned.crt;
+    ssl_certificate_key D:/nginx-certs/nginx-selfsigned.key;
+    
+    location / {
+        proxy_pass http://nodejs_cluster;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+Now we can access our app on https://localhost
+
+To redirect users if they hit http:// endpoint, write this configuration:
+
+server {
+    listen 80;
+    server_name localhost;
+    
+    location / {
+        return 301 https://$host/$request_uri;
+    }
+}

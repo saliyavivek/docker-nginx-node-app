@@ -15,17 +15,29 @@ http {
     }
 
     server {
-        listen 8080;
+        listen 443 ssl;
         server_name localhost;
-
+        
+        ssl_certificate D:/nginx-certs/nginx-selfsigned.crt;
+        ssl_certificate_key D:/nginx-certs/nginx-selfsigned.key;
+        
         location / {
             proxy_pass http://nodejs_cluster;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
     }
+
+    server {
+        listen 80;
+        server_name localhost;
+        
+        location / {
+            return 301 https://$host/$request_uri;
+        }
+    }
 }
 
 # start the containers: docker-compose up --build
 # start nginx from C:/nginx: start nginx
-# try to access 'localhost:8080' and check the server logs to see which app served the request.
+# try to access 'https://localhost'
