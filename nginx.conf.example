@@ -1,13 +1,17 @@
 worker_processes 1;
 
 events {
-    worker_connections 1024;
+    #if you have i worker process, you can handle 1024 simultaneous connections. more connections = more memory usage
+    worker_connections 1024; #default: 512
 }
 
 http {
-    include mime.types;
+    include mime.types; #include corrosponding MIME types in the "content-type" response header when sending a file
 
-    upstream nodejs_cluster {
+    upstream nodejs_cluster { #upstream: refers to servers that nginx will forward requests to
+        # which server nginx will forward requests to?
+        # default: round robin
+        # we can change it to "least_conn" to forward requests to a server with least connections
         least_conn;
         server 127.0.0.1:3001;
         server 127.0.0.1:3002;
@@ -16,12 +20,12 @@ http {
 
     server {
         listen 8080;
-        server_name localhost;
+        server_name localhost; #from where the client is sending request
 
         location / {
-            proxy_pass http://nodejs_cluster;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
+            proxy_pass http://nodejs_cluster; #proxy_pass: tells nginx to "pass" the request to another server, making it act as a "reverse proxy" 
+            proxy_set_header Host $host; #allows backend to see original request from the client. e.g. original IP address, original host, custom headers, etc. nginx stores these information inside variable "$host"
+            proxy_set_header X-Real-IP $remote_addr; #pass the original IP address of the client, stored in the variable "$remote_addr"
         }
     }
 }
